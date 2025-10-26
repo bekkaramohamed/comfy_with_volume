@@ -22,7 +22,7 @@ RUN mkdir -p /runpod-volume/models && \
 # 🔍 Torch + CUDA Check
 # =======================================================
 RUN date && \
-    echo "🧠 Checking Torch and CUDA version..." && \
+    echo "🧠 Checking Torch and CUDA version !..." && \
     python3 -c "import torch; print(f'Torch version: {torch.__version__}, CUDA: {torch.version.cuda}')"
 
 # =======================================================
