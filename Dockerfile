@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.4
-FROM runpod/worker-comfyui:5.1.0-base
+FROM runpod/worker-comfyui:5.5.0-base
 
 # =======================================================
 # ⚙️ Dépendances système
@@ -14,30 +14,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends git curl && rm 
 RUN mkdir -p /runpod-volume/models && \
     rm -rf /workspace && ln -s /runpod-volume /workspace && \
     rm -rf /comfyui/models && ln -s /runpod-volume/models /comfyui/models && \
-    echo "🔗 Symlinks created:" && \
+    echo "🔗 Symlinks created successfully:" && \
     ls -l / | grep runpod-volume && ls -l /comfyui | grep models
+
 
 # =======================================================
 # 🔍 Torch + CUDA Check
 # =======================================================
-RUN echo "🧠 Checking Torch and CUDA version..." && \
+RUN date && \
+    echo "🧠 Checking Torch and CUDA version..." && \
     python3 -c "import torch; print(f'Torch version: {torch.__version__}, CUDA: {torch.version.cuda}')"
 
 # =======================================================
-# ⚙️ Installation de Nunchaku
+# ⚙️ Installation de Nunchaku (v1.0.1 compatible Torch 2.7 + Python 3.12)
 # =======================================================
-RUN echo "📦 Installing Nunchaku wheel..." && \
+RUN echo "📦 Installing Nunchaku 1.0.1 (Torch 2.7, cp312)..." && \
     pip install --no-cache-dir \
-      'https://github.com/nunchaku-tech/nunchaku/releases/download/v1.0.0/nunchaku-1.0.0+torch2.6-cp312-cp312-linux_x86_64.whl'
-
-# =======================================================
-# 🧩 Installation des nodes depuis le registry
-# =======================================================
-RUN echo "🧩 Installing registry-based custom nodes..." && \
-    comfy-node-install \
-      rgthree-comfy \
-      ComfyUI-nunchaku \
-      ComfyUI-WanVideoWrapper || true
+      'https://github.com/nunchaku-tech/nunchaku/releases/download/v1.0.1/nunchaku-1.0.1+torch2.7-cp312-cp312-linux_x86_64.whl'
 
 # =======================================================
 # 🧠 Clonage manuel des nodes non présents dans le registry
@@ -47,6 +40,11 @@ RUN echo "📦 Cloning manual custom nodes..." && \
     git clone --depth 1 https://github.com/yolain/ComfyUI-Easy-Use.git && \
     git clone --depth 1 https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite.git && \
     git clone --depth 1 https://github.com/shiimizu/ComfyUI-TiledDiffusion.git && \
+    git clone --depth 1 https://github.com/gseth/ControlAltAI-Nodes.git && \
+    git clone --depth 1 https://github.com/cubiq/ComfyUI_essentials.git && \
+    git clone --depth 1 https://github.com/rgthree/rgthree-comfy.git && \
+    git clone --depth 1 https://github.com/nunchaku-tech/ComfyUI-nunchaku.git && \
+    git clone --depth 1 https://github.com/kijai/ComfyUI-WanVideoWrapper.git && \
     rm -rf /comfyui/custom_nodes/*/.git && \
     echo "📥 Installing deps for manually cloned nodes..." && \
     for d in /comfyui/custom_nodes/*; do \
@@ -56,7 +54,15 @@ RUN echo "📦 Cloning manual custom nodes..." && \
     done
 
 # =======================================================
+# 🧩 Dépendances Python manquantes (sécurité)
+# =======================================================
+RUN pip install --no-cache-dir pillow numpy opencv-python-headless
+
+# =======================================================
 # ✅ Vérifications finales
 # =======================================================
 RUN echo "✅ Installed custom nodes:" && ls -1 /comfyui/custom_nodes && \
     echo "✅ Symlinked model directory:" && ls -l /comfyui/models
+
+
+
